@@ -12,7 +12,7 @@ A responsive PC component configurator built with **React + TypeScript + Vite**.
 | **React 18 + TypeScript** | UI framework + type safety |
 | **Tailwind CSS v4** | Utility-first styling |
 | **Shadcn UI** | Accessible component primitives (Radix UI) |
-| **Zustand** | Global state + undo/redo history stack |
+| ** Redux-toolkit** | Global state + undo/redo history stack |
 | **jsPDF** | Client-side PDF export |
 | **Sonner** | Toast notifications |
 
@@ -22,16 +22,10 @@ A responsive PC component configurator built with **React + TypeScript + Vite**.
 
 ```bash
 # Install dependencies
-pnpm install
+npm  install
 
 # Start the dev server (Vite)
-pnpm --filter @workspace/bundle-builder run dev
-
-# Type-check only
-pnpm --filter @workspace/bundle-builder run typecheck
-```
-
-The app is served at `http://localhost:<PORT>`.
+pnpm run dev
 
 ---
 
@@ -39,7 +33,7 @@ The app is served at `http://localhost:<PORT>`.
 
 - **Budget tracker** — $1,000 limit with a live progress bar; blocks selections that would overshoot
 - **Incompatibility engine** — selecting a CPU immediately disables incompatible motherboards (and vice versa) via an `incompatibleWith` array on each component
-- **Undo / Redo** — full history stack (up to 50 states) managed in Zustand
+- **Undo / Redo** — full history stack (up to 50 states) managed in Redux
 - **PDF export** — generates a styled A4 build summary via jsPDF, no server needed
 - **Dark / Light mode** — toggled in the header, persisted to `localStorage`
 - **Responsive layout** — two-column grid on desktop; single-column + fixed bottom budget bar + floating cart sheet on mobile
@@ -49,7 +43,6 @@ The app is served at `http://localhost:<PORT>`.
 
 ## Undo / Redo Architecture
 
-State is managed in a single Zustand store (`useBuildStore`) using a **three-stack model**:
 
 ```
 past[]  →  present  →  future[]
