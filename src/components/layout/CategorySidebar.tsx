@@ -8,6 +8,8 @@ interface CategorySidebarProps {
   totalPrice: number;
   selectedCount: number;
   onClearBuild: () => void;
+  isSidebarOpen?: boolean;
+  onCloseSidebar?: () => void;
 }
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -39,6 +41,8 @@ export function CategorySidebar({
   totalPrice,
   selectedCount,
   onClearBuild,
+  isSidebarOpen,
+  onCloseSidebar,
 }: CategorySidebarProps) {
   const lastSelectedComp = Object.values(selectedIds)
     .map((id) => MOCK_COMPONENTS.find((c) => c.id === id)!)
@@ -46,78 +50,98 @@ export function CategorySidebar({
     .at(-1);
 
   return (
-    <nav
-      className="hidden md:flex flex-col w-44 border-r border-border shrink-0 bg-sidebar"
-      aria-label="Component categories"
-    >
-      {/* Category nav links */}
-      <ul role="list" className="flex flex-col gap-0.5 p-2 flex-1">
-        {CATEGORIES.map((cat) => {
-          const isActive = !!selectedIds[cat];
-          return (
-            <li key={cat}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "w-full justify-start gap-2.5 text-[11px] font-bold h-9 rounded-sm cyber-text tracking-wider",
-                  isActive
-                    ? "bg-sidebar-primary text-white hover:bg-sidebar-primary/90"
-                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-                )}
-                onClick={() => scrollToCategory(cat)}
-                aria-label={`${CAT_LABELS[cat]}${isActive ? " — selected" : ""}`}
-                aria-current={isActive ? "true" : undefined}
-              >
-                <span className={isActive ? "text-white" : "text-sidebar-foreground/50"}>
-                  {ICON_MAP[cat]}
-                </span>
-                {CAT_LABELS[cat]}
-              </Button>
-            </li>
-          );
-        })}
-      </ul>
+    <>
+      {/* Mobile backdrop */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={onCloseSidebar}
+          aria-hidden="true"
+        />
+      )}
 
-      {/* Bottom: thumbnail + total + clear */}
-      <div className="border-t border-sidebar-border p-3 space-y-3">
-        {lastSelectedComp?.image && (
-          <div className="rounded-sm overflow-hidden h-16 relative">
-            <img
-              src={lastSelectedComp.image}
-              alt={lastSelectedComp.name}
-              className="w-full h-full object-cover opacity-80"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-sidebar/80 to-transparent" />
-          </div>
+      <nav
+        className={cn(
+          "flex-col w-44 border-r border-border shrink-0 bg-sidebar",
+          "max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50",
+          "max-md:transition-transform max-md:duration-300 max-md:ease-in-out",
+          isSidebarOpen ? "max-md:translate-x-0 flex" : "max-md:-translate-x-full hidden",
+          "md:flex"
         )}
+        aria-label="Component categories"
+      >
+        {/* Category nav links */}
+        <ul role="list" className="flex flex-col gap-0.5 p-2 flex-1">
+          {CATEGORIES.map((cat) => {
+            const isActive = !!selectedIds[cat];
+            return (
+              <li key={cat}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "w-full justify-start gap-2.5 text-[11px] font-bold h-9 rounded-sm cyber-text tracking-wider",
+                    isActive
+                      ? "bg-sidebar-primary text-white hover:bg-sidebar-primary/90"
+                      : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                  )}
+                  onClick={() => {
+                    scrollToCategory(cat);
+                    onCloseSidebar?.();
+                  }}
+                  aria-label={`${CAT_LABELS[cat]}${isActive ? " — selected" : ""}`}
+                  aria-current={isActive ? "true" : undefined}
+                >
+                  <span className={isActive ? "text-white" : "text-sidebar-foreground/50"}>
+                    {ICON_MAP[cat]}
+                  </span>
+                  {CAT_LABELS[cat]}
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
 
-        <div>
-          <p
-            className={cn(
-              "text-xl font-black cyber-text",
-              totalPrice > MAX_BUDGET ? "text-red-400" : "text-primary"
-            )}
-            aria-label={`Total: $${totalPrice}`}
+        {/* Bottom: thumbnail + total + clear */}
+        <div className="border-t border-sidebar-border p-3 space-y-3">
+          {lastSelectedComp?.image && (
+            <div className="rounded-sm overflow-hidden h-16 relative">
+              <img
+                src={lastSelectedComp.image}
+                alt={lastSelectedComp.name}
+                className="w-full h-full object-cover opacity-80"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-sidebar/80 to-transparent" />
+            </div>
+          )}
+
+          <div>
+            <p
+              className={cn(
+                "text-xl font-black cyber-text",
+                totalPrice > MAX_BUDGET ? "text-red-400" : "text-primary"
+              )}
+              aria-label={`Total: $${totalPrice}`}
+            >
+              ${totalPrice.toFixed(0)}
+            </p>
+            <p className="text-[10px] text-sidebar-foreground/50 cyber-text">
+              OF ${MAX_BUDGET} BUDGET
+            </p>
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-7 text-[10px] cyber-text font-bold tracking-widest rounded-sm border-border text-muted-foreground hover:text-destructive hover:border-destructive"
+            onClick={onClearBuild}
+            disabled={selectedCount === 0}
+            aria-label="Clear all selected components"
           >
-            ${totalPrice.toFixed(0)}
-          </p>
-          <p className="text-[10px] text-sidebar-foreground/50 cyber-text">
-            OF ${MAX_BUDGET} BUDGET
-          </p>
+            CLEAR BUILD
+          </Button>
         </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full h-7 text-[10px] cyber-text font-bold tracking-widest rounded-sm border-border text-muted-foreground hover:text-destructive hover:border-destructive"
-          onClick={onClearBuild}
-          disabled={selectedCount === 0}
-          aria-label="Clear all selected components"
-        >
-          CLEAR BUILD
-        </Button>
-      </div>
-    </nav>
+      </nav>
+    </>
   );
 }
