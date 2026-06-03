@@ -1,4 +1,4 @@
-import { Download, Trash2, ShieldCheck } from "lucide-react";
+import { Download, Trash2, ShieldCheck, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Component } from "@/types";
@@ -63,6 +63,7 @@ export function CartPanel({ selectedIds, total, onClearBuild }: CartPanelProps) 
             SYSTEM CONFIG
           </span>
         </div>
+        <Settings className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
       </div>
 
       {/* Item list */}
@@ -124,6 +125,7 @@ export function CartPanel({ selectedIds, total, onClearBuild }: CartPanelProps) 
         {/* Main action button */}
         <Button
           className="w-full h-10 text-xs font-black cyber-text tracking-widest bg-primary hover:bg-primary/90 rounded-sm"
+          onClick={handleExportPDF}
           disabled={isEmpty}
           aria-label="Export build summary as PDF"
         >

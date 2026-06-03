@@ -1,4 +1,4 @@
-import { Moon, Sun, RotateCcw, RotateCw } from "lucide-react";
+import { Moon, Sun, RotateCcw, RotateCw, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Theme } from "@/types";
@@ -50,7 +50,7 @@ export function Header({ theme, onToggleTheme, totalPrice }: HeaderProps) {
         </div>
 
         {/* Budget bar */}
-        <div className="hidden md:flex flex-1 items-center justify-center gap-3 px-4">
+        <div className="flex-1 flex items-center justify-center gap-3 px-4">
           <span className="text-[10px] cyber-text text-muted-foreground whitespace-nowrap hidden md:block">
             POWER CONSUMPTION:
           </span>
@@ -145,6 +145,19 @@ export function Header({ theme, onToggleTheme, totalPrice }: HeaderProps) {
             <TooltipContent>Toggle theme</TooltipContent>
           </Tooltip>
 
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                aria-label="Settings"
+              >
+                <Settings className="h-3.5 w-3.5" aria-hidden="true" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Settings</TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </header>
