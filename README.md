@@ -6,9 +6,10 @@ A modern PC configuration platform that allows users to build a compatible custo
 
 # Preview
 
-![App Screenshot](./public/IMAG.jpg)
-
-![App Screenshot 2](./public/image.png)
+<p align="center">
+  <img src="./public/IMAG.jpg" alt="App Screenshot" width="45%" />
+  <img src="./public/image.png" alt="App Screenshot 2" width="45%" />
+</p>
 
 ## Core Capabilities
 
