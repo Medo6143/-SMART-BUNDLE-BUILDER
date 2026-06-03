@@ -2,21 +2,13 @@
 
 A modern PC configuration platform that allows users to build a compatible custom PC bundle within a fixed **$1,000 budget**.
 
-The application focuses on:
-
-- predictable state management
-- scalable frontend architecture
-- undo/redo history handling
-- clean separation of concerns
-- performance-conscious Redux patterns
-
-Built with React, TypeScript, Redux Toolkit, Vite, and Tailwind CSS v4.
-
 ---
 
 # Preview
 
 ![App Screenshot](./public/IMAG.jpg)
+
+![App Screenshot 2](./public/image.png)
 
 ## Core Capabilities
 
@@ -78,6 +70,8 @@ http://localhost:5173
 # Undo/Redo Architecture
 
 Undo/Redo is implemented using a **linear history stack** inside a single Redux slice (`buildSlice.ts`).
+
+ Why a Linear History Stack? WHY NOT COMMANT PATTERN EVENT OR Event Sourcing? I WILL TELL YOU IN INTERVIEW 
 
 The state follows a classic triple-buffer structure:
 
@@ -153,6 +147,7 @@ present = future.shift()
 ```
 
 ---
+
 
 
 ## Special Notes
