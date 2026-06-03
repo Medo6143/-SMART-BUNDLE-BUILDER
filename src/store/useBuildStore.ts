@@ -1,7 +1,4 @@
-/**
- * useBuildStore — Redux-backed hook that preserves the same API surface
- * previously provided by Zustand, so all consumers continue to work unchanged.
- */
+
 import { useAppDispatch, useAppSelector } from "./hooks";
 import {
   selectComponent,

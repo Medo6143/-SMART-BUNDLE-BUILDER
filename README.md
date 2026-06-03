@@ -25,6 +25,35 @@ A modern PC configuration platform that allows users to build a compatible custo
 
 ---
 
+# Project Structure
+
+```
+bundle-builder/
+├── public/              # Static assets (images, favicon)
+├── src/
+│   ├── components/      # UI components (builder, cart, layout, ui)
+│   ├── config/          # App configuration
+│   ├── data/            # Mock data (components, categories, budget)
+│   ├── hooks/           # Custom React hooks (useBuildActions, useTheme)
+│   ├── lib/             # Utility functions (cn, tailwind-merge)
+│   ├── pages/           # Page-level components
+│   ├── services/        # External services (PDF export)
+│   ├── store/           # Redux store, slices, typed hooks
+│   ├── types/           # TypeScript interfaces and types
+│   ├── utils/           # Helper functions
+│   ├── App.tsx          # Root component
+│   ├── index.css        # Global styles
+│   └── main.tsx         # Entry point
+├── index.html           # HTML shell
+├── vite.config.ts       # Vite configuration
+├── vercel.json          # Vercel deployment settings
+├── tailwind.config.js   # Tailwind CSS configuration
+├── tsconfig.json        # TypeScript configuration
+└── package.json         # Dependencies and scripts
+```
+
+---
+
 # Tech Stack
 
 | Technology | Purpose |
