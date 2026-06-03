@@ -7,8 +7,8 @@ A modern PC configuration platform that allows users to build a compatible custo
 # Preview
 
 <p align="center">
-  <img src="./public/IMAG.jpg" alt="App Screenshot" width="45%" />
-  <img src="./public/image.png" alt="App Screenshot 2" width="45%" />
+  <img src="./public/IMAG.jpg" alt="App Screenshot" width="400" height="250" style="object-fit: cover;" />
+  <img src="./public/image.png" alt="App Screenshot 2" width="400" height="250" style="object-fit: cover;" />
 </p>
 
 ## Core Capabilities
