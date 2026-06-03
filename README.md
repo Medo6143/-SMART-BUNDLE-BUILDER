@@ -1,119 +1,50 @@
 # Smart Bundle Builder
 
-A responsive PC component configurator built with **React + TypeScript + Vite**. Users pick parts across six categories (CPU, Motherboard, RAM, GPU, Storage, PSU), stay within a $1,000 budget, and avoid hardware incompatibilities — all in real time, with no backend required.
-
----
-
-## Tech Stack
-
-| Tool | Role |
-|---|---|
-| **Vite** | Dev server and bundler (lightning-fast HMR) |
-| **React 18 + TypeScript** | UI framework + type safety |
-| **Tailwind CSS v4** | Utility-first styling |
-| **Shadcn UI** | Accessible component primitives (Radix UI) |
-| ** Redux-toolkit** | Global state + undo/redo history stack |
-| **jsPDF** | Client-side PDF export |
-| **Sonner** | Toast notifications |
-
----
+A PC component configurator that lets you pick parts within a $1,000 budget, respecting compatibility constraints between components. Built with React, Redux Toolkit, Vite, and Tailwind CSS v4.
 
 ## How to Run
 
 ```bash
 # Install dependencies
-npm  install
+npm install
 
-# Start the dev server (Vite)
-pnpm run dev
+# Start development server
+npm run dev
 
----
+# Type-check
+npm run typecheck
 
-## Features
+# Production build
+npm run build
 
-- **Budget tracker** — $1,000 limit with a live progress bar; blocks selections that would overshoot
-- **Incompatibility engine** — selecting a CPU immediately disables incompatible motherboards (and vice versa) via an `incompatibleWith` array on each component
-- **Undo / Redo** — full history stack (up to 50 states) managed in Redux
-- **PDF export** — generates a styled A4 build summary via jsPDF, no server needed
-- **Dark / Light mode** — toggled in the header, persisted to `localStorage`
-- **Responsive layout** — two-column grid on desktop; single-column + fixed bottom budget bar + floating cart sheet on mobile
-- **Accessibility** — keyboard navigation (Tab / Enter / Space), ARIA roles (`listbox`, `option`, `progressbar`, `region`), `aria-live` budget announcements, skip-to-content link
-
----
-
-## Undo / Redo Architecture
-
-
-```
-past[]  →  present  →  future[]
+# Preview production build locally
+npm run serve
 ```
 
-Every mutating action (select, deselect, clear) pushes the current `present` onto `past` and clears `future`. Undo pops from `past`, pushes `present` to `future`, and sets the popped state as `present`. Redo is the mirror operation.
+The dev server runs on `http://localhost:5173`.
 
-Each entry stores a snapshot of `selectedIds` (a plain `Record<string, string>`) so clones are O(n) where n = number of categories (always ≤ 6). The stack is capped at 50 entries to keep memory bounded.
+## Undo/Redo Architecture
 
-```ts
-// Simplified
-selectComponent: (category, id) => {
-  const entry = { state: cloneState(present) };
-  set({ present: newState, past: [...past, entry], future: [] });
-},
-undo: () => {
-  const prev = past.at(-1);
-  set({ present: prev.state, past: past.slice(0,-1), future: [current, ...future] });
-},
-```
-
----
-
-## Project Structure
+Undo/Redo is implemented as a **linear history stack** inside a single Redux slice (`buildSlice.ts`). The state shape follows a classic triple-buffer pattern:
 
 ```
-src/
-├── data/
-│   └── components.ts          # Mock component data (no backend)
-├── hooks/
-│   ├── useBuildActions.ts     # Handlers + derived state (totalPrice, selectedCount)
-│   └── useTheme.ts            # Dark/light toggle + localStorage persistence
-├── services/
-│   └── pdfExport.ts           # jsPDF build summary generator
-├── store/
-│   └── useBuildStore.ts       # Zustand store with undo/redo history
-├── types/
-│   └── index.ts               # Shared TypeScript interfaces
-├── components/
-│   ├── builder/
-│   │   ├── ComponentCard.tsx  # Single part card (image, specs, equip button)
-│   │   ├── ComponentGrid.tsx  # Scrollable area — maps categories → CategorySection
-│   │   └── CategorySection.tsx# One category header + 2-col card grid
-│   ├── cart/
-│   │   └── CartPanel.tsx      # Right sidebar: item list, total, PDF export, clear
-│   └── layout/
-│       ├── Header.tsx          # Top bar: logo, budget indicator, undo/redo, theme
-│       ├── CategorySidebar.tsx # Left nav: category links + thumbnail + total
-│       ├── ComponentGrid.tsx   # Main scrollable content
-│       ├── MobileCartSheet.tsx # Floating FAB + slide-in cart (mobile)
-│       └── MobileBudgetBar.tsx # Full-width bottom bar (mobile)
-└── pages/
-    └── BuilderPage.tsx         # Thin orchestrator — composes all panels
+{ past: BuildSnapshot[], present: BuildSnapshot, future: BuildSnapshot[] }
 ```
 
----
+- **Every mutation** (`selectComponent`, `deselectComponent`, `clearBuild`) clones the current snapshot, appends it to `past` (capped at 50 entries), sets the new snapshot as `present`, and clears `future`.
+- **Undo**: pops the last entry from `past`, pushes the current `present` onto `future`, and sets the popped entry as `present`.
+- **Redo**: shifts the first entry from `future`, pushes the current `present` onto `past`, and sets the shifted entry as `present`.
 
-## SOLID Principles Applied
+Snapshots are shallow-cloned (`{ selectedIds: { ...prev.selectedIds } }`) to keep the cost of each push minimal. Because Redux Toolkit uses Immer internally, reducers appear to mutate state directly but are actually immutable.
 
-| Principle | How |
-|---|---|
-| **S**ingle Responsibility | Each file does exactly one thing (data, store, service, UI) |
-| **O**pen/Closed | New categories added to `MOCK_COMPONENTS` with no changes to rendering logic |
-| **L**iskov | All `ComponentCard` variants behave the same way via consistent props interface |
-| **I**nterface Segregation | Each component receives only the props it needs |
-| **D**ependency Inversion | UI reads from `useBuildActions` (abstraction), not `useBuildStore` (implementation) directly |
+The `useBuildActions` hook wraps dispatch calls and exposes derived state (budget calculations, compatibility checks) so UI components stay free of business logic.
 
----
+## Special Notes
 
-## Notes
-
-- All data is local (mock) — no network requests. To add real data, replace `MOCK_COMPONENTS` in `src/data/components.ts` with an API fetch.
-- PDF export uses jsPDF entirely client-side — no server, no file upload.
-- The `incompatibleWith` array is bidirectional in the data but the engine only needs to read from the selected side; both entries are kept in sync for clarity.
+- **Vercel deployment**: the Vite build outputs to `dist/public/`. A `vercel.json` file tells Vercel where to find the built files.
+- **Single-page app**: no client-side router — the entire UI lives on one page. No need for SPA fallback rewrites on Vercel.
+- **Budget enforcement**: selecting a component that exceeds the $1,000 cap is prevented client-side, with a toast notification showing the overage.
+- **Compatibility**: components can declare `incompatibleWith` IDs. Selection handlers can be extended to enforce these rules at the UI level.
+- **PDF export**: uses `jsPDF` and `html2canvas` to generate a printable build summary with a budget usage bar.
+- **Theme**: light/dark mode toggled via CSS class on `<html>`, persisted through a custom hook.
+- **Shadcn/ui**: UI primitives (dialogs, tooltips, toasts, scroll areas) powered by Radix and styled with Tailwind.
