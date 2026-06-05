@@ -184,18 +184,6 @@ pastCommands   = [...pastCommands, cmd]
 
 ---
 
-## Why Commands Instead of Snapshots?
-
-| Approach | Stores | Undo Cost | Memory |
-|---|---|---|---|
-| Snapshot stack | Full `selectedIds` copy per action | O(1) swap | O(n × k) where k = number of categories |
-| Command pattern | Delta only (one field change) | O(1) invert+apply | O(n × 1) — just the changed field |
-
-The Command pattern is more memory-efficient for this domain because each mutation touches
-only a single category, while a snapshot stores every category on every step.
-
----
-
 
 
 ## Special Notes
