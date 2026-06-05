@@ -1,6 +1,6 @@
  Smart Bundle Builder — PC Configuration Platform
 
-A modern PC configuration platform that allows users to build a compatible custom PC bundle within a fixed **$1,000 budget**.
+A modern PC configuration platform with a **gaming-inspired design** that allows users to build a compatible custom PC bundle within a fixed **$1,000 budget**.
 
 ---
 
