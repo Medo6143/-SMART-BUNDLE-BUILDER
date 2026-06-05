@@ -17,9 +17,9 @@ import { Component } from "@/types";
 export function useBuildActions() {
   const dispatch = useAppDispatch();
 
-  const selectedIds = useAppSelector((s) => s.build.present.selectedIds);
-  const canUndo = useAppSelector((s) => s.build.past.length > 0);
-  const canRedo = useAppSelector((s) => s.build.future.length > 0);
+  const selectedIds = useAppSelector((s) => s.build.selectedIds);
+  const canUndo = useAppSelector((s) => s.build.pastCommands.length > 0);
+  const canRedo = useAppSelector((s) => s.build.futureCommands.length > 0);
 
   const totalPrice = Object.values(selectedIds).reduce((sum, id) => {
     const comp = MOCK_COMPONENTS.find((c) => c.id === id);

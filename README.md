@@ -99,82 +99,100 @@ http://localhost:5173
 
 # Undo/Redo Architecture
 
-Undo/Redo is implemented using a **linear history stack** inside a single Redux slice (`buildSlice.ts`).
+Undo/Redo is implemented using the **Command pattern** inside a single Redux slice (`buildSlice.ts`).
 
- Why a Linear History Stack? WHY NOT COMMANT PATTERN EVENT OR Event Sourcing? I WILL TELL YOU IN INTERVIEW 
-
-The state follows a classic triple-buffer structure:
-
-```ts
-{
-  past: BuildSnapshot[],
-  present: BuildSnapshot,
-  future: BuildSnapshot[]
-}
-```
+Instead of storing full snapshots of the entire state on every mutation, each action is
+captured as a self-describing **Command object** that stores only the delta. Undo and redo
+work by inverting or re-applying individual commands rather than swapping whole snapshots.
 
 ---
 
-# Snapshot Structure
+# Command Types
+
+Every command is a plain serializable discriminated union:
 
 ```ts
-interface BuildSnapshot {
+type Command =
+  | { type: "SELECT_COMPONENT"; category: string; componentId: string; prevId?: string }
+  | { type: "DESELECT_COMPONENT"; category: string; prevId: string }
+  | { type: "CLEAR_BUILD"; prevSelectedIds: Record<string, string> };
+```
+
+- `prevId` / `prevSelectedIds` capture the **previous value** so the command can be undone.
+- Commands live in `src/commands/index.ts` with two pure functions:
+  - `applyCommand(state, cmd)` — produces the next state by executing a command.
+  - `invertCommand(cmd)` — returns the inverse command needed for undo.
+
+---
+
+# State Shape
+
+```ts
+interface BuildState {
   selectedIds: Record<string, string>;
+  pastCommands: Command[];
+  futureCommands: Command[];
 }
 ```
 
-Example snapshot:
-
-```ts
-{
-  cpu: "ryzen-7",
-  gpu: "rtx-4070",
-  ram: "corsair-32gb"
-}
-```
-
-The application stores only normalized primitive mappings,
-which keeps snapshots lightweight and efficient to clone.
-
-Because the state shape is flat and predictable,
-shallow cloning is sufficient.
+- `selectedIds` is the **current live state** (not wrapped in a snapshot).
+- `pastCommands` is the ordered list of executed commands (for undo).
+- `futureCommands` is the ordered list of undone commands (for redo).
 
 ---
 
-# How Undo/Redo Works
+# How It Works
 
-## State Mutations
+## Executing an Action
 
-Every mutation:
+Each mutation reducer constructs a command, applies it to the current state, appends it to
+`pastCommands`, and clears `futureCommands` (invalidating redo history):
 
-- stores the current snapshot in `past`
-- applies a new snapshot to `present`
-- clears `future`
-- enforces a capped history size
-
-```ts
-past.push(present)
-present = nextState
-future = []
+```
+cmd = { type: "SELECT_COMPONENT", category, componentId, prevId }
+state.selectedIds    = applyCommand(state.selectedIds, cmd)
+state.pastCommands   = [...pastCommands, cmd]
+state.futureCommands = []
 ```
 
 ---
 
 ## Undo
 
-```ts
-future.unshift(present)
-present = past.pop()
+Pops the last command, inverts it, applies the inverse, and pushes the original onto
+`futureCommands`:
+
+```
+cmd            = pastCommands.pop()
+inverse        = invertCommand(cmd)
+state.selectedIds = applyCommand(state.selectedIds, inverse)
+futureCommands = [cmd, ...futureCommands]
 ```
 
 ---
 
 ## Redo
 
-```ts
-past.push(present)
-present = future.shift()
+Shifts the next command from `futureCommands`, applies it, and pushes it back onto
+`pastCommands`:
+
 ```
+cmd            = futureCommands.shift()
+state.selectedIds = applyCommand(state.selectedIds, cmd)
+pastCommands   = [...pastCommands, cmd]
+```
+
+---
+
+## Why Commands Instead of Snapshots?
+
+| Approach | Stores | Undo Cost | Memory |
+|---|---|---|---|
+| Snapshot stack | Full `selectedIds` copy per action | O(1) swap | O(n × k) where k = number of categories |
+| Command pattern | Delta only (one field change) | O(1) invert+apply | O(n × 1) — just the changed field |
+
+The Command pattern is more memory-efficient for this domain because each mutation touches
+only a single category, while a snapshot stores every category on every step.
 
 ---
 

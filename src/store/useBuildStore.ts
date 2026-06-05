@@ -11,12 +11,12 @@ import {
 export function useBuildStore() {
   const dispatch = useAppDispatch();
 
-  const present = useAppSelector((s) => s.build.present);
-  const canUndoValue = useAppSelector((s) => s.build.past.length > 0);
-  const canRedoValue = useAppSelector((s) => s.build.future.length > 0);
+  const selectedIds = useAppSelector((s) => s.build.selectedIds);
+  const canUndoValue = useAppSelector((s) => s.build.pastCommands.length > 0);
+  const canRedoValue = useAppSelector((s) => s.build.futureCommands.length > 0);
 
   return {
-    present,
+    selectedIds,
 
     selectComponent: (category: string, componentId: string) =>
       dispatch(selectComponent({ category, componentId })),

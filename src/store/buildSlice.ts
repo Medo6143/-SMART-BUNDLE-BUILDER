@@ -1,35 +1,24 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-
-/** Snapshot of which component is selected per category. */
-export interface BuildSnapshot {
-  selectedIds: Record<string, string>;
-}
+import { Command, applyCommand, invertCommand } from "@/commands";
 
 interface BuildState {
-  present: BuildSnapshot;
-  past: BuildSnapshot[];
-  future: BuildSnapshot[];
+  selectedIds: Record<string, string>;
+  pastCommands: Command[];
+  futureCommands: Command[];
 }
 
 const MAX_HISTORY = 50;
 
-const EMPTY_SNAPSHOT: BuildSnapshot = { selectedIds: {} };
-
-function cloneSnapshot(s: BuildSnapshot): BuildSnapshot {
-  return { selectedIds: { ...s.selectedIds } };
-}
-
 const initialState: BuildState = {
-  present: EMPTY_SNAPSHOT,
-  past: [],
-  future: [],
+  selectedIds: {},
+  pastCommands: [],
+  futureCommands: [],
 };
 
-function pushHistory(state: BuildState, next: BuildSnapshot) {
-  const entry = cloneSnapshot(state.present);
-  state.past = [...state.past, entry].slice(-MAX_HISTORY);
-  state.present = next;
-  state.future = [];
+function pushCommand(state: BuildState, cmd: Command) {
+  state.pastCommands = [...state.pastCommands, cmd].slice(-MAX_HISTORY);
+  state.selectedIds = applyCommand(state.selectedIds, cmd);
+  state.futureCommands = [];
 }
 
 export const buildSlice = createSlice({
@@ -41,36 +30,47 @@ export const buildSlice = createSlice({
       action: PayloadAction<{ category: string; componentId: string }>
     ) {
       const { category, componentId } = action.payload;
-      const next = cloneSnapshot(state.present);
-      next.selectedIds[category] = componentId;
-      pushHistory(state, next);
+      const prevId = state.selectedIds[category];
+      const cmd: Command = {
+        type: "SELECT_COMPONENT",
+        category,
+        componentId,
+        prevId,
+      };
+      pushCommand(state, cmd);
     },
 
     deselectComponent(state, action: PayloadAction<{ category: string }>) {
       const { category } = action.payload;
-      const next = cloneSnapshot(state.present);
-      delete next.selectedIds[category];
-      pushHistory(state, next);
+      const prevId = state.selectedIds[category];
+      if (!prevId) return;
+      const cmd: Command = { type: "DESELECT_COMPONENT", category, prevId };
+      pushCommand(state, cmd);
     },
 
     clearBuild(state) {
-      pushHistory(state, EMPTY_SNAPSHOT);
+      const cmd: Command = {
+        type: "CLEAR_BUILD",
+        prevSelectedIds: state.selectedIds,
+      };
+      pushCommand(state, cmd);
     },
 
     undo(state) {
-      if (state.past.length === 0) return;
-      const previous = state.past[state.past.length - 1];
-      state.future = [cloneSnapshot(state.present), ...state.future];
-      state.present = previous;
-      state.past = state.past.slice(0, -1);
+      if (state.pastCommands.length === 0) return;
+      const cmd = state.pastCommands[state.pastCommands.length - 1];
+      const inverse = invertCommand(cmd);
+      state.selectedIds = applyCommand(state.selectedIds, inverse);
+      state.futureCommands = [cmd, ...state.futureCommands];
+      state.pastCommands = state.pastCommands.slice(0, -1);
     },
 
     redo(state) {
-      if (state.future.length === 0) return;
-      const next = state.future[0];
-      state.past = [...state.past, cloneSnapshot(state.present)];
-      state.present = next;
-      state.future = state.future.slice(1);
+      if (state.futureCommands.length === 0) return;
+      const cmd = state.futureCommands[0];
+      state.selectedIds = applyCommand(state.selectedIds, cmd);
+      state.pastCommands = [...state.pastCommands, cmd];
+      state.futureCommands = state.futureCommands.slice(1);
     },
   },
 });
